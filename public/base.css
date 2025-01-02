@@ -1,0 +1,86 @@
+/* Core variables */
+:root {
+    --day: #fffdfa;
+    --evening: #fccc83;
+    --dusk: #db7a2a;
+    --night: #0f131c;
+    --dawn: #16132b;
+    --morning: #9fb3bf;
+    
+    --light: var(--day);
+    --dark: var(--night);
+    --shadow: #1a1917;
+    --bounce-light: #f5d7a6;
+    --timing-fn: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Base resets and styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    background-color: var(--light);
+    font-family: "Times New Roman", Times, serif;
+    animation-duration: 0s;
+    animation-fill-mode: forwards;
+    animation-timing-function: linear;
+    overflow: hidden;
+}
+
+/* Layout */
+.main-content {
+    margin: 0 auto;
+    max-width: 800px;
+    padding: 40vh 0;
+    color: var(--dark);
+    isolation: isolate;
+}
+
+/* Core animations */
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(20px); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-out { animation: fadeOut 0.5s var(--timing-fn) forwards; }
+.fade-in { animation: fadeIn 0.5s var(--timing-fn) forwards; }
+
+/* Theme transitions */
+body.animation-ready {
+    animation: sunrise 1s linear forwards;
+}
+
+body.animation-ready.dark {
+    animation: sunset 1.7s linear forwards;
+    --light: var(--night);
+    --dark: var(--day);
+    --shadow: #030307;
+    --bounce-light: #1b293f;
+}
+
+@keyframes sunrise {
+    0% { background-color: var(--night); }
+    10% { background-color: var(--dawn); }
+    35% { background-color: var(--morning); }
+    100% { background-color: var(--day); }
+}
+
+@keyframes sunset {
+    0% { background-color: var(--day); }
+    30% { background-color: var(--evening); }
+    60% { background-color: var(--dusk); }
+    90% { background-color: var(--dawn); }
+    100% { background-color: var(--night); }
+}

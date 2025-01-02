@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>thoughtful</title>
+    <link rel="stylesheet" href="./ambient.css">
+    <link rel="stylesheet" href="./base.css">
+    <link rel="stylesheet" href="./components.css">
+
+</head>
+<body>
+    <div class="background">
+        <div id="dappled-light">
+            <div id="glow"></div>
+            <div id="glow-bounce"></div>
+            <div class="perspective">
+                <div id="leaves">
+                    <svg style="width: 0; height: 0; position: absolute;">
+                        <defs>
+                            <filter id="wind" x="-20%" y="-20%" width="140%" height="140%">
+                                <feTurbulence type="fractalNoise" numOctaves="2" seed="1">
+                                    <animate attributeName="baseFrequency" dur="16s" keyTimes="0;0.33;0.66;1"
+                                    values="0.005 0.003;0.01 0.009;0.008 0.004;0.005 0.003" repeatCount="indefinite"/>
+                                </feTurbulence>
+                                <feDisplacementMap in="SourceGraphic">
+                                    <animate attributeName="scale" dur="20s" keyTimes="0;0.25;0.5;0.75;1"
+                                    values="45;55;75;55;45" repeatCount="indefinite"/>
+                                </feDisplacementMap>
+                            </filter>
+                        </defs>
+                    </svg>
+                </div>
+                <div id="blinds">
+                    <div class="shutters">
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                        <div class="shutter"></div>
+                    </div>
+                    <div class="vertical">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="progressive-blur">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="initial-content">
+            <h1>thoughtful.</h1>
+            <pre>[press enter when you're ready]</pre>
+            <input placeholder="your name" class="inputs" type="text" autocapitalize="off">
+        </div>
+        
+        <div class="thoughts-view">
+            <div class="thoughts-container"></div>
+            <div class="button-container">
+                <button class="page-button prev-page">←</button>
+                <button class="add-thought">+</button>
+                <button class="page-button next-page">→</button>
+            </div>
+        </div>
+
+        
+        
+        <div class="chat-interface">
+            <!-- chat interface -->
+            <div class="chat-container">
+                <input type="text" class="chat-input" placeholder="let the thoughts flow...">
+                    <div class="user-name"></div>
+                    <button class="send-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send-horizontal"><path d="M3.714 3.048a.498.498 0 0 0-.683.627l2.843 7.627a2 2 0 0 1 0 1.396l-2.842 7.627a.498.498 0 0 0 .682.627l18-8.5a.5.5 0 0 0 0-.904z"/><path d="M6 12h16"/></svg>
+                        
+                    </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="thoughtful.js"></script>
+    
+</body>
+</html>

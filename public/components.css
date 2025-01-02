@@ -1,0 +1,267 @@
+/* Initial view components */
+.initial-content {
+    opacity: 1;
+    display: block;
+    transition: opacity 0.5s var(--timing-fn);
+}
+
+.initial-content.hidden {
+    opacity: 0;
+    display: none;
+}
+
+h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin-bottom: 1rem;
+}
+
+/* Input styles */
+.inputs {
+    font-family: inherit;
+    padding: 7px 20px;
+    border-radius: 16px;
+    font-size: 15px;
+    background-color: rgb(from var(--dark) r g b / 0.05);
+    border: 1px solid rgb(from var(--dark) r g b / 0.1);
+    color: var(--dark);
+    backdrop-filter: blur(100px);
+    transition: all 0.4s var(--timing-fn);
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+}
+
+.inputs:hover, .inputs:focus {
+    background-color: rgb(from var(--dark) r g b / 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgb(from var(--dark) r g b / 0.07);
+}
+
+/* Chat interface */
+.chat-interface {
+    display: none;
+    width: 80%;
+    max-width: 600px;
+    margin: 0 auto;
+    opacity: 0;
+    transition: opacity 0.5s var(--timing-fn);
+}
+
+.chat-interface.visible {
+    display: block;
+    opacity: 1;
+}
+
+.chat-container {
+    background-color: rgb(from var(--dark) r g b / 0.05);
+    border: 1px solid rgb(from var(--dark) r g b / 0.1);
+    backdrop-filter: blur(100px);
+    border-radius: 24px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 5vh;
+    transition: all 0.4s var(--timing-fn);
+}
+
+.chat-input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--dark);
+    font-size: 15px;
+    padding: 8px 0;
+    font-family: inherit;
+}
+
+.chat-input:focus {
+    outline: none;
+}
+
+.user-name {
+    font-size: 13px;
+    color: var(--dark);
+    opacity: 0.5;
+    margin-right: auto;
+    font-style: italic;
+}
+
+/* Button styles */
+.button, .page-button, .add-thought {
+    background-color: rgb(from var(--dark) r g b / 0.08);
+    border: 1px solid rgb(from var(--dark) r g b / 0.1);
+    color: var(--dark);
+    backdrop-filter: blur(100px);
+    cursor: pointer;
+    transition: all 0.4s var(--timing-fn);
+}
+
+.send-button {
+    background-color: transparent;
+    border: 1px solid rgb(from var(--dark) r g b / 0.1);
+    color: var(--dark);
+    border-radius: 12px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.4s var(--timing-fn);
+}
+.send-button:hover {
+    background-color: rgb(from var(--dark) r g b / 0.08);
+    transform: scale(1.05);
+}
+
+.send-button svg {
+    color: inherit;
+    stroke: currentColor;
+}
+
+.page-button, .add-thought {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 18px;
+}
+.page-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 18px;
+}
+
+.add-thought {
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    font-size: 24px;
+}
+
+.page-button:not(:disabled):hover,
+.add-thought:hover {
+    transform: scale(1.1);
+    background-color: rgb(from var(--dark) r g b / 0.12);
+}
+
+.page-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Thoughts view */
+.thoughts-view {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.5s var(--timing-fn);
+    padding: 0 20px;
+    margin-top: -20vh;
+}
+
+.thoughts-view.visible {
+    display: block;
+    opacity: 1;
+}
+
+.thoughts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 100px;
+}
+
+/* Card styles */
+.thought-card {
+    background-color: rgb(from var(--dark) r g b / 0.05);
+    border: 1px solid rgb(from var(--dark) r g b / 0.1);
+    backdrop-filter: blur(100px);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.5s var(--timing-fn);
+    transform: perspective(1000px) rotateX(0) rotateY(0);
+    transform-style: preserve-3d;
+}
+
+.thought-card:hover {
+    transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) translateY(-5px);
+    background-color: rgb(from var(--dark) r g b / 0.08);
+    box-shadow:
+        15px 15px 30px rgb(from var(--dark) r g b / 0.03),
+        -5px -5px 30px rgb(from var(--dark) r g b / 0.03);
+}
+
+.thought-card.new-card {
+    animation: cardEntrance 0.8s var(--timing-fn) forwards;
+}
+
+.thought-content {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    color: var(--dark);
+}
+
+.thought-meta {
+    font-size: 13px;
+    color: var(--dark);
+    opacity: 0.5;
+    font-style: italic;
+}
+
+/* Button container */
+.button-container {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    opacity: 0;
+    transition: all 0.4s var(--timing-fn);
+}
+
+.thoughts-view.visible .button-container {
+    opacity: 1;
+}
+
+/* Animations */
+@keyframes cardEntrance {
+    0% {
+        opacity: 0;
+        transform: perspective(1000px) rotateX(10deg) rotateY(-10deg) translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: perspective(1000px) rotateX(0) rotateY(0) translateY(0);
+    }
+}
+
+@keyframes ripple {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0.4;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(4);
+        opacity: 0;
+    }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.shake {
+    animation: shake 0.2s ease-in-out 0s 2;
+}
