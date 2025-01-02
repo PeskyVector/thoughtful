@@ -89,19 +89,35 @@ function handleNameSubmit(name) {
     });
 }
 
-function handleThoughtSubmit() {
+async function handleThoughtSubmit() {
     const thought = elements.chatInput.value.trim();
     if (!thought || thought.length > MAX_THOUGHT_LENGTH) return;
     
-    const newThought = createThought(thought);
-    state.thoughts.unshift(newThought);
-    elements.chatInput.value = '';
-    
-    elements.chatInterface.style.display = 'none';
-    showThoughtsView();
-    state.currentPage = 1; // Reset to first page
-    renderThoughts();
-    highlightNewThought(newThought.id);
+    try {
+        const response = await fetch('/api/notes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                content: thought,
+                author: state.userName
+            })
+        });
+
+        if (!response.ok) throw new Error('Failed to post thought');
+        
+        const newThought = await response.json();
+        elements.chatInput.value = '';
+        
+        elements.chatInterface.style.display = 'none';
+        showThoughtsView();
+        state.currentPage = 1; // Reset to first page
+        await renderThoughts();
+        highlightNewThought(newThought.id);
+    } catch (error) {
+        console.error('Error posting thought:', error);
+    }
 }
 
 function handleDarkMode(event) {
@@ -127,20 +143,33 @@ function showThoughtsView() {
     renderThoughts();
 }
 
-function renderThoughts() {
-    const start = (state.currentPage - 1) * state.thoughtsPerPage;
-    const pageThoughts = state.thoughts.slice(start, start + state.thoughtsPerPage);
-    
-    const html = pageThoughts.map(thought => `
-        <div class="thought-card" data-id="${thought.id}">
-            <div class="thought-content">${thought.content}</div>
-            <div class="thought-meta">${thought.author} • ${thought.timestamp}</div>
-        </div>
-    `).join('');
-    
-    elements.thoughtsContainer.innerHTML = html;
-    updatePagination();
+async function renderThoughts() {
+    try {
+        const response = await fetch(`/api/notes/${state.currentPage}`);
+        if (!response.ok) throw new Error('Failed to fetch thoughts');
+        
+        const data = await response.json();
+        const pageThoughts = data.notes;
+        
+        const html = pageThoughts.map(thought => `
+            <div class="thought-card" data-id="${thought.id}">
+                <div class="thought-content">${thought.content}</div>
+                <div class="thought-meta">${thought.author} • ${new Date(thought.timestamp).toLocaleString('en-US', {
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: true
+                })}</div>
+            </div>
+        `).join('');
+        
+        elements.thoughtsContainer.innerHTML = html;
+        updatePagination(data.totalPages);
+    } catch (error) {
+        console.error('Error fetching thoughts:', error);
+        // You might want to show an error message to the user here
+    }
 }
+
 
 // Animations
 function fadeOut(element) {
@@ -176,19 +205,23 @@ function createThought(content) {
     };
 }
 
-function changePage(delta) {
+async function changePage(delta) {
     const newPage = state.currentPage + delta;
-    const maxPage = Math.ceil(state.thoughts.length / state.thoughtsPerPage);
-    
-    if (newPage > 0 && newPage <= maxPage) {
-        state.currentPage = newPage;
-        renderThoughts();
+    try {
+        const response = await fetch(`/api/notes/${newPage}`);
+        if (!response.ok) throw new Error('Failed to fetch page');
+        
+        const data = await response.json();
+        if (newPage > 0 && newPage <= data.totalPages) {
+            state.currentPage = newPage;
+            await renderThoughts();
+        }
+    } catch (error) {
+        console.error('Error changing page:', error);
     }
 }
 
-function updatePagination() {
-    const maxPage = Math.ceil(state.thoughts.length / state.thoughtsPerPage);
-    
+function updatePagination(maxPage) {
     document.querySelector('.prev-page').disabled = state.currentPage === 1;
     document.querySelector('.next-page').disabled = state.currentPage === maxPage || maxPage === 0;
 }
