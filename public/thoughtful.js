@@ -73,8 +73,8 @@ function handleKeyPress(event) {
 }
 
 function shakeInput() {
-    elements.chatInput.classList.add('shake');
-    setTimeout(() => elements.chatInput.classList.remove('shake'), 500);
+    elements.chatInput.closest('.chat-container').classList.add('shake');
+    setTimeout(() => elements.chatInput.closest('.chat-container').classList.remove('shake'), 500);
 }
 
 function handleNameSubmit(name) {
