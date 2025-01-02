@@ -101,7 +101,7 @@
     right: -700px;
     width: 1600px;
     height: 1400px;
-    background-image: url("leaves.png");
+    background-image: url("./images/leaves.png");
     filter: url(#wind);
     animation: billow 8s ease-in-out infinite;
 }

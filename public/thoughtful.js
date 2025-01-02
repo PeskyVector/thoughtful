@@ -7,7 +7,7 @@ const state = {
     darkMode: false
 };
 
-const MAX_THOUGHT_LENGTH = 280; // Twitter-like limit
+const MAX_THOUGHT_LENGTH = 100; // Twitter-like limit
 
 
 // DOM Elements
