@@ -1,3 +1,4 @@
+// /app/api/notes/[page]/route.js
 import { notes } from '../route';
 
 const NOTES_PER_PAGE = 6;
@@ -7,25 +8,24 @@ export async function GET(request, context) {
         const params = await context.params;
         let page = parseInt(params.page, 10) || 1;
         
-        // Calculate max pages
-        const maxPages = Math.max(1, Math.ceil(notes.length / NOTES_PER_PAGE));
+        // Sort notes by timestamp (newest first)
+        const sortedNotes = [...notes].sort((a, b) =>
+            new Date(b.timestamp) - new Date(a.timestamp)
+        );
         
-        // Clamp page number between 1 and maxPages
+        const maxPages = Math.max(1, Math.ceil(sortedNotes.length / NOTES_PER_PAGE));
         page = Math.max(1, Math.min(page, maxPages));
         
-        // Shuffle all notes
-        const shuffledNotes = [...notes].sort(() => Math.random() - 0.5);
-        
-        // Calculate pagination
         const startIndex = (page - 1) * NOTES_PER_PAGE;
         const endIndex = startIndex + NOTES_PER_PAGE;
-        const paginatedNotes = shuffledNotes.slice(startIndex, endIndex);
+        const paginatedNotes = sortedNotes.slice(startIndex, endIndex);
         
         return Response.json({
             notes: paginatedNotes,
             currentPage: page,
             totalPages: maxPages,
-            totalNotes: notes.length
+            totalNotes: notes.length,
+            hasNewNotes: false // Flag for polling updates
         });
     } catch (error) {
         console.error('Pagination Error:', error);

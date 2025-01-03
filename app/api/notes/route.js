@@ -1,10 +1,9 @@
-// In-memory storage for notes (will reset on server restart)
+// /app/api/notes/route.js
 export let notes = [];
 
-// Maximum length for content
 const MAX_CONTENT_LENGTH = 1000;
-// Maximum notes to store
 const MAX_NOTES = 1000;
+const NOTES_PER_PAGE = 6;
 
 function sanitizeInput(str) {
     return str
@@ -17,11 +16,15 @@ function sanitizeInput(str) {
 
 export async function GET() {
     try {
-        const shuffledNotes = [...notes].sort(() => Math.random() - 0.5);
+        // Return notes sorted by timestamp (newest first)
+        const sortedNotes = [...notes].sort((a, b) =>
+            new Date(b.timestamp) - new Date(a.timestamp)
+        );
         
         return Response.json({
-            notes: shuffledNotes.slice(0, 6),
-            total: notes.length
+            notes: sortedNotes.slice(0, NOTES_PER_PAGE),
+            total: notes.length,
+            totalPages: Math.ceil(notes.length / NOTES_PER_PAGE)
         });
     } catch (error) {
         console.error('GET Error:', error);
@@ -33,7 +36,6 @@ export async function POST(request) {
     try {
         const data = await request.json();
         
-        // Basic validation
         if (!data.content?.trim() || !data.author?.trim()) {
             return Response.json(
                 { error: 'Content and author are required' },
@@ -41,7 +43,6 @@ export async function POST(request) {
             );
         }
 
-        // Length validation
         if (data.content.length > MAX_CONTENT_LENGTH) {
             return Response.json(
                 { error: 'Content too long' },
@@ -49,13 +50,10 @@ export async function POST(request) {
             );
         }
 
-        // Prevent note overflow
         if (notes.length >= MAX_NOTES) {
-            // Remove oldest note
             notes.pop();
         }
 
-        // Create new note with sanitized input
         const newNote = {
             id: Date.now().toString(),
             content: sanitizeInput(data.content.trim()),
@@ -63,10 +61,12 @@ export async function POST(request) {
             timestamp: new Date().toISOString(),
         };
 
-        // Add to start of array (newest first)
         notes.unshift(newNote);
 
-        return Response.json(newNote, { status: 201 });
+        return Response.json({
+            note: newNote,
+            totalPages: Math.ceil(notes.length / NOTES_PER_PAGE)
+        }, { status: 201 });
     } catch (error) {
         console.error('POST Error:', error);
         return Response.json(

@@ -5,11 +5,12 @@ const state = {
     thoughts: [],
     userName: '',
     darkMode: false,
-    pollingInterval: null  // Add this line
+    pollingInterval: null,
+    lastUpdate: null,
+    isPolling: false
 };
 
-const MAX_THOUGHT_LENGTH = 100; // Twitter-like limit
-
+const MAX_THOUGHT_LENGTH = 100;
 
 // DOM Elements
 const elements = {
@@ -22,30 +23,55 @@ const elements = {
     userNameDisplay: document.querySelector('.user-name'),
     sendButton: document.querySelector('.send-button'),
     addThoughtBtn: document.querySelector('.add-thought'),
-    pageNumber: document.querySelector('.page-number'),
-    buttonContainer: document.querySelector('.button-container')
+    notificationPill: document.querySelector('.notification-pill'),
+    prevPageBtn: document.querySelector('.prev-page'),
+    nextPageBtn: document.querySelector('.next-page')
 };
 
 // Event Listeners
 function initializeEventListeners() {
-    // Handle all keypress events
     document.addEventListener('keyup', handleKeyPress);
-    
-    // Button clicks
     elements.sendButton.addEventListener('click', handleThoughtSubmit);
     elements.addThoughtBtn.addEventListener('click', showChatInterface);
-    
-    // Pagination
-    document.querySelector('.prev-page').addEventListener('click', () => changePage(-1));
-    document.querySelector('.next-page').addEventListener('click', () => changePage(1));
-    
-    // Dark mode toggle
+    elements.prevPageBtn.addEventListener('click', () => changePage(-1));
+    elements.nextPageBtn.addEventListener('click', () => changePage(1));
+    elements.notificationPill.addEventListener('click', async () => {
+        elements.notificationPill.classList.add('hidden');
+        await renderThoughts();
+    });
     document.addEventListener('click', handleDarkMode);
+}
+
+// Polling function
+async function pollForNewThoughts() {
+    if (state.isPolling) return;
+    
+    try {
+        state.isPolling = true;
+        const response = await fetch(`/api/notes/${state.currentPage}`);
+        if (!response.ok) throw new Error('Failed to fetch thoughts');
+        
+        const data = await response.json();
+        const latestThoughtTime = state.lastUpdate;
+        
+        // Check if there are any newer thoughts
+        const hasNewThoughts = data.notes.some(thought =>
+            !latestThoughtTime || new Date(thought.timestamp) > new Date(latestThoughtTime)
+        );
+        
+        if (hasNewThoughts) {
+            elements.notificationPill.classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Error polling thoughts:', error);
+    } finally {
+        state.isPolling = false;
+    }
 }
 
 function startPolling() {
     if (!state.pollingInterval) {
-        state.pollingInterval = setInterval(pollForNewThoughts, 5000);
+        state.pollingInterval = setInterval(pollForNewThoughts, 1000); // Poll every 1 second (bad idea) seconds
     }
 }
 
@@ -56,38 +82,8 @@ function stopPolling() {
     }
 }
 
-async function pollForNewThoughts() {
-    try {
-        const response = await fetch(`/api/notes/${state.currentPage}`);
-        if (!response.ok) throw new Error('Failed to fetch thoughts');
-        
-        const data = await response.json();
-        
-        // Only update if we have different content
-        const currentContent = elements.thoughtsContainer.innerHTML;
-        const newContent = data.notes.map(thought => `
-            <div class="thought-card" data-id="${thought.id}">
-                <div class="thought-content">${thought.content}</div>
-                <div class="thought-meta">${thought.author} • ${new Date(thought.timestamp).toLocaleString('en-US', {
-                    hour: 'numeric',
-                    minute: 'numeric',
-                    hour12: true
-                })}</div>
-            </div>
-        `).join('');
-
-        if (currentContent !== newContent) {
-            elements.thoughtsContainer.innerHTML = newContent;
-            updatePagination(data.totalPages);
-        }
-    } catch (error) {
-        console.error('Error polling thoughts:', error);
-    }
-}
 // Event Handlers
-
 function handleKeyPress(event) {
-    
     if (event.key === 'Enter') {
         if (event.target === elements.nameInput) {
             const name = event.target.value.trim();
@@ -103,15 +99,12 @@ function handleKeyPress(event) {
         }
     }
     
-    // Check length while typing
     if (event.target === elements.chatInput) {
         if (event.target.value.length > MAX_THOUGHT_LENGTH) {
             shakeInput();
             event.target.value = event.target.value.slice(0, MAX_THOUGHT_LENGTH);
         }
     }
-    
-    
 }
 
 function shakeInput() {
@@ -129,9 +122,6 @@ function handleNameSubmit(name) {
         fadeIn(elements.chatInterface);
         elements.chatInput.focus();
     });
-}
-function cleanup() {
-    stopPolling();
 }
 
 async function handleThoughtSubmit() {
@@ -152,14 +142,23 @@ async function handleThoughtSubmit() {
 
         if (!response.ok) throw new Error('Failed to post thought');
         
-        const newThought = await response.json();
+        const data = await response.json();
         elements.chatInput.value = '';
+        
+        // Reset to first page and update timestamp
+        state.currentPage = 1;
+        state.lastUpdate = data.note.timestamp;
         
         elements.chatInterface.style.display = 'none';
         showThoughtsView();
-        state.currentPage = 1; // Reset to first page
         await renderThoughts();
-        highlightNewThought(newThought.id);
+        
+        // Highlight new thought
+        const newCard = document.querySelector(`[data-id="${data.note.id}"]`);
+        if (newCard) {
+            newCard.classList.add('new-thought');
+            setTimeout(() => newCard.classList.remove('new-thought'), 1000);
+        }
     } catch (error) {
         console.error('Error posting thought:', error);
     }
@@ -178,17 +177,15 @@ function showChatInterface() {
     stopPolling();
     elements.thoughtsView.classList.remove('visible');
     elements.chatInterface.style.display = 'block';
-    elements.chatInput.value = ''; // Clear any previous input
+    elements.chatInput.value = '';
     fadeIn(elements.chatInterface);
     elements.chatInput.focus();
 }
 
 function showThoughtsView() {
-    
     elements.thoughtsView.style.display = 'block';
     elements.thoughtsView.classList.add('visible');
     startPolling();
-
     renderThoughts();
 }
 
@@ -199,29 +196,31 @@ async function renderThoughts() {
         
         const data = await response.json();
         
+        // Update last update timestamp
+        if (data.notes.length > 0) {
+            state.lastUpdate = data.notes[0].timestamp;
+        }
+        
         const html = data.notes.map(thought => `
             <div class="thought-card" data-id="${thought.id}">
                 <div class="thought-content">${thought.content}</div>
-                <div class="thought-meta">${thought.author} • ${new Date(thought.timestamp).toLocaleString('en-US', {
-                    hour: 'numeric',
-                    minute: 'numeric',
-                    hour12: true
-                })}</div>
+                <div class="thought-meta">
+                    ${thought.author} • ${new Date(thought.timestamp).toLocaleString('en-US', {
+                        hour: 'numeric',
+                        minute: 'numeric',
+                        hour12: true
+                    })}
+                </div>
             </div>
         `).join('');
 
         elements.thoughtsContainer.innerHTML = html;
+        elements.notificationPill.classList.add('hidden');
         updatePagination(data.totalPages);
-
-        // Start polling if not already started
-        if (!state.pollingInterval) {
-            state.pollingInterval = setInterval(pollForNewThoughts, 5000);
-        }
     } catch (error) {
         console.error('Error fetching thoughts:', error);
     }
 }
-
 
 // Animations
 function fadeOut(element) {
@@ -234,29 +233,7 @@ function fadeIn(element) {
     element.classList.add('fade-in');
 }
 
-function highlightNewThought(id) {
-    setTimeout(() => {
-        const card = document.querySelector(`[data-id="${id}"]`);
-        if (card) {
-            card.classList.add('new-card');
-        }
-    }, 100);
-}
-
-// Utilities
-function createThought(content) {
-    return {
-        id: Date.now(),
-        content,
-        author: state.userName,
-        timestamp: new Date().toLocaleString('en-US', {
-            hour: 'numeric',
-            minute: 'numeric',
-            hour12: true
-        })
-    };
-}
-
+// Pagination
 async function changePage(delta) {
     const newPage = state.currentPage + delta;
     try {
@@ -274,8 +251,13 @@ async function changePage(delta) {
 }
 
 function updatePagination(maxPage) {
-    document.querySelector('.prev-page').disabled = state.currentPage === 1;
-    document.querySelector('.next-page').disabled = state.currentPage === maxPage || maxPage === 0;
+    elements.prevPageBtn.disabled = state.currentPage === 1;
+    elements.nextPageBtn.disabled = state.currentPage === maxPage || maxPage === 0;
+}
+
+// Cleanup
+function cleanup() {
+    stopPolling();
 }
 
 // Initialize
