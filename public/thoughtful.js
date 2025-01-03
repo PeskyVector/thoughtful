@@ -4,7 +4,8 @@ const state = {
     thoughtsPerPage: 6,
     thoughts: [],
     userName: '',
-    darkMode: false
+    darkMode: false,
+    pollingInterval: null  // Add this line
 };
 
 const MAX_THOUGHT_LENGTH = 100; // Twitter-like limit
@@ -42,6 +43,47 @@ function initializeEventListeners() {
     document.addEventListener('click', handleDarkMode);
 }
 
+function startPolling() {
+    if (!state.pollingInterval) {
+        state.pollingInterval = setInterval(pollForNewThoughts, 5000);
+    }
+}
+
+function stopPolling() {
+    if (state.pollingInterval) {
+        clearInterval(state.pollingInterval);
+        state.pollingInterval = null;
+    }
+}
+
+async function pollForNewThoughts() {
+    try {
+        const response = await fetch(`/api/notes/${state.currentPage}`);
+        if (!response.ok) throw new Error('Failed to fetch thoughts');
+        
+        const data = await response.json();
+        
+        // Only update if we have different content
+        const currentContent = elements.thoughtsContainer.innerHTML;
+        const newContent = data.notes.map(thought => `
+            <div class="thought-card" data-id="${thought.id}">
+                <div class="thought-content">${thought.content}</div>
+                <div class="thought-meta">${thought.author} • ${new Date(thought.timestamp).toLocaleString('en-US', {
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: true
+                })}</div>
+            </div>
+        `).join('');
+
+        if (currentContent !== newContent) {
+            elements.thoughtsContainer.innerHTML = newContent;
+            updatePagination(data.totalPages);
+        }
+    } catch (error) {
+        console.error('Error polling thoughts:', error);
+    }
+}
 // Event Handlers
 
 function handleKeyPress(event) {
@@ -88,6 +130,9 @@ function handleNameSubmit(name) {
         elements.chatInput.focus();
     });
 }
+function cleanup() {
+    stopPolling();
+}
 
 async function handleThoughtSubmit() {
     const thought = elements.chatInput.value.trim();
@@ -130,6 +175,7 @@ function handleDarkMode(event) {
 
 // UI Updates
 function showChatInterface() {
+    stopPolling();
     elements.thoughtsView.classList.remove('visible');
     elements.chatInterface.style.display = 'block';
     elements.chatInput.value = ''; // Clear any previous input
@@ -138,8 +184,11 @@ function showChatInterface() {
 }
 
 function showThoughtsView() {
+    
     elements.thoughtsView.style.display = 'block';
     elements.thoughtsView.classList.add('visible');
+    startPolling();
+
     renderThoughts();
 }
 
@@ -149,9 +198,8 @@ async function renderThoughts() {
         if (!response.ok) throw new Error('Failed to fetch thoughts');
         
         const data = await response.json();
-        const pageThoughts = data.notes;
         
-        const html = pageThoughts.map(thought => `
+        const html = data.notes.map(thought => `
             <div class="thought-card" data-id="${thought.id}">
                 <div class="thought-content">${thought.content}</div>
                 <div class="thought-meta">${thought.author} • ${new Date(thought.timestamp).toLocaleString('en-US', {
@@ -161,12 +209,16 @@ async function renderThoughts() {
                 })}</div>
             </div>
         `).join('');
-        
+
         elements.thoughtsContainer.innerHTML = html;
         updatePagination(data.totalPages);
+
+        // Start polling if not already started
+        if (!state.pollingInterval) {
+            state.pollingInterval = setInterval(pollForNewThoughts, 5000);
+        }
     } catch (error) {
         console.error('Error fetching thoughts:', error);
-        // You might want to show an error message to the user here
     }
 }
 
@@ -228,3 +280,4 @@ function updatePagination(maxPage) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', initializeEventListeners);
+window.addEventListener('beforeunload', cleanup);
